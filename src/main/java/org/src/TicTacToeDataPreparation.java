@@ -12,9 +12,13 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.src.TicTacToeAITrain.outputSize;
+
 public class TicTacToeDataPreparation {
     private static List<INDArray> inputs;
     private static List<INDArray> outputs;
+
+    private static int skipped = 0;
 
     static {
         try {
@@ -26,7 +30,7 @@ public class TicTacToeDataPreparation {
 
     private static void prepareData() throws Exception {
         // Load the dataset from a CSV file
-        String csvFilePath = "Dataset3.csv"; // Replace with the actual file path
+        String csvFilePath = "Datasets1.csv"; // Replace with the actual file path
         InputSplit dataSplit = new FileSplit(new File(csvFilePath));
         try (RecordReader recordReader = new CSVRecordReader()) {
             recordReader.initialize(dataSplit);
@@ -37,32 +41,36 @@ public class TicTacToeDataPreparation {
 
             while (recordReader.hasNext()) {
                 List<Writable> record = recordReader.next();
-                try {
-                    String gameState = record.get(0).toString();
-                    int outcome = Integer.parseInt(record.get(1).toString().trim());
-                    int currentState = Integer.parseInt(record.get(2).toString().trim()); // New input
+                if (record.size() >= 3) { // Ensure the record has at least 3 elements
+                    try {
+                        String gameState = record.get(0).toString();
+                        int outcome = Integer.parseInt(record.get(1).toString().trim());
+                        int currentState = Integer.parseInt(record.get(2).toString().trim()); // New input
 
-                    // Convert gameState to input (one-hot encoding)
-                    INDArray input = convertToInput(gameState);
+                        // Convert gameState to input (one-hot encoding)
+                        INDArray input = convertToInput(gameState);
 
-                    // Convert outcome to output (one-hot encoding of next move)
-                    INDArray output = convertToOutput(String.valueOf(outcome), currentState);
+                        // Convert outcome to output (one-hot encoding of next move)
+                        INDArray output = convertToOutput(String.valueOf(outcome), currentState);
 
-                    // Handle the currentState as needed
-                    // For example, you can add it to the input or output, or use it in some other way.
+                        // Handle the currentState as needed
+                        // For example, you can add it to the input or output, or use it in some other way.
 
-                    inputs.add(input);
-                    outputs.add(output);
+                        inputs.add(input);
+                        outputs.add(output);
 
-                } catch (NumberFormatException e) {
-                    System.out.println("Error parsing record: " + record);
-                    e.printStackTrace();
+                    } catch (NumberFormatException e) {
+                        System.out.println("Error parsing record: " + record);
+                        e.printStackTrace();
+                    }
+                } else {
+                    skipped++;
+                    System.out.println(skipped + " Skipping record with insufficient elements: " + record);
                 }
             }
-
-
         }
     }
+
 
     public static List<INDArray> getInputs() {
         return inputs;
@@ -71,10 +79,10 @@ public class TicTacToeDataPreparation {
     public static List<INDArray> getOutputs() {
         return outputs;
     }
+
     // Helper method to convert gameState to input (one-hot encoding)
     public static INDArray convertToInput(String gameState) {
-        // This will result in an array of size 27 for 9 board positions
-        INDArray input = Nd4j.zeros(1, 27);
+        INDArray input = Nd4j.zeros(1, 432);
 
         for (int i = 0; i < gameState.length(); i++) {
             char c = gameState.charAt(i);
@@ -87,18 +95,27 @@ public class TicTacToeDataPreparation {
             }
         }
 
+        // Reshape the input to have shape [1, 432]
+        input = input.reshape(1, 432);
+
         return input;
     }
 
-    // Helper method to convert outcome to output (one-hot encoding of next move)
-    // Helper method to convert outcome to output (one-hot encoding of next move and current state)
+
+    // Helper method to convert outcome and currentState to output
     private static INDArray convertToOutput(String outcomeStr, int currentState) {
         int outcome = Integer.parseInt(outcomeStr);
-        INDArray output = Nd4j.zeros(1, 10); // Increased size to 10
+        // Assuming 144 possible next moves in your classification problem
+        int outputSize = 144;
+        INDArray output = Nd4j.zeros(1, outputSize);
+
+        // Set the appropriate position in the output array to 1
         output.putScalar(new int[] {0, outcome}, 1);
-        output.putScalar(new int[] {0, 9}, currentState); // Append currentState to the end
+
+        // Append the currentState to the end
+        output.putScalar(new int[] {0, outputSize - 1}, currentState);
+
         return output;
     }
-
 
 }

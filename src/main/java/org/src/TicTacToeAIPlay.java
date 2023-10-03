@@ -5,57 +5,66 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.DecimalFormat;
-import java.util.Arrays;
 import java.util.Objects;
-
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
-
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.util.ModelSerializer;
 import java.io.File;
 import java.io.IOException;
 
-import static org.nd4j.linalg.factory.Nd4j.*;
-
 public class TicTacToeAIPlay {
     private static char currentPlayer = 'X';
     private static JFrame frame;
-    private static final JButton[][] buttons = new JButton[3][3];
-
-    // You should initialize this with your trained model
+    private static final int BOARD_SIZE = 12;
+    private static final JButton[][] buttons = new JButton[BOARD_SIZE][BOARD_SIZE];
     private static MultiLayerNetwork trainedModel;
-
     private static JFrame probabilityFrame;
+
+    private static final JLabel[][] probabilityLabels = new JLabel[BOARD_SIZE][BOARD_SIZE];
+
     public static void start() {
         trainedModel = loadModel("C:\\Users\\andre\\IdeaProjects\\AIPlaysThreeInARow\\TicTacToeModel.zip");
-        frame = new JFrame("Tic-Tac-Toe");
+        frame = new JFrame("Five-in-a-Row");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(300, 300);
-        frame.setLayout(new GridLayout(3, 3));
+        frame.setSize(BOARD_SIZE * 100, BOARD_SIZE * 100);
+        frame.setLayout(new GridLayout(BOARD_SIZE, BOARD_SIZE));
 
         initializeButtons(frame);
         frame.setVisible(true);
 
-        // Create the probability frame
         probabilityFrame = new JFrame("Probabilities");
         probabilityFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        probabilityFrame.setSize(300, 300);
-        probabilityFrame.setLayout(new GridLayout(3, 3));
+        probabilityFrame.setSize(BOARD_SIZE * 100, BOARD_SIZE * 100);
+        probabilityFrame.setLayout(new GridLayout(BOARD_SIZE, BOARD_SIZE));
         initializeProbabilityLabels(probabilityFrame);
 
         while (true) {
-            if(currentPlayer == 'O') {
+            if (currentPlayer == 'O') {
                 aiMakeMove();
                 switchPlayer();
             }
         }
     }
 
+
+
+
+    private static void initializeProbabilityLabels(JFrame probabilityFrame) {
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                JLabel label = new JLabel("0.00");
+                label.setFont(new Font("Arial", Font.PLAIN, 15));
+                label.setHorizontalAlignment(JLabel.CENTER);
+                probabilityLabels[i][j] = label;
+                probabilityFrame.add(label);
+            }
+        }
+    }
+
     private static void initializeButtons(JFrame frame) {
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 3; col++) {
+        for (int row = 0; row < BOARD_SIZE; row++) {
+            for (int col = 0; col < BOARD_SIZE; col++) {
                 JButton button = new JButton("");
                 button.setFont(new Font("Arial", Font.PLAIN, 40));
                 button.setFocusPainted(false);
@@ -72,53 +81,47 @@ public class TicTacToeAIPlay {
 
     private static boolean checkWin() {
         String currentPlayerStr = convertCurrentPlayer();
-
-        // Check rows
-        for (int row = 0; row < 3; row++) {
-            if (Objects.equals(getValueOfButton(row, 0), currentPlayerStr) &&
-                    Objects.equals(getValueOfButton(row, 1), currentPlayerStr) &&
-                    Objects.equals(getValueOfButton(row, 2), currentPlayerStr)) {
-                return true;
+        // Check rows, columns and diagonals for 5 consecutive symbols
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                if (checkDirection(i, j, 0, 1, currentPlayerStr) ||  // horizontal
+                        checkDirection(i, j, 1, 0, currentPlayerStr) ||  // vertical
+                        checkDirection(i, j, 1, 1, currentPlayerStr) ||  // diagonal /
+                        checkDirection(i, j, 1, -1, currentPlayerStr)) { // diagonal \
+                    return true;
+                }
             }
         }
-
-        // Check columns
-        for (int col = 0; col < 3; col++) {
-            if (Objects.equals(getValueOfButton(0, col), currentPlayerStr) &&
-                    Objects.equals(getValueOfButton(1, col), currentPlayerStr) &&
-                    Objects.equals(getValueOfButton(2, col), currentPlayerStr)) {
-                return true;
-            }
-        }
-
-        // Check diagonals
-        if (Objects.equals(getValueOfButton(0, 0), currentPlayerStr) &&
-                Objects.equals(getValueOfButton(1, 1), currentPlayerStr) &&
-                Objects.equals(getValueOfButton(2, 2), currentPlayerStr)) {
-            return true;
-        }
-        if (Objects.equals(getValueOfButton(0, 2), currentPlayerStr) &&
-                Objects.equals(getValueOfButton(1, 1), currentPlayerStr) &&
-                Objects.equals(getValueOfButton(2, 0), currentPlayerStr)) {
-            return true;
-        }
-
         return false;
+    }
+
+    // Helper function for checkWin() to check in a specified direction
+    private static boolean checkDirection(int row, int col, int dRow, int dCol, String player) {
+        int count = 0;
+        for (int i = 0; i < 5; i++) {
+            if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE) {
+                return false; // Out of bounds
+            }
+            if (buttons[row][col].getText().equals(player)) {
+                count++;
+            } else {
+                break;
+            }
+            row += dRow;
+            col += dCol;
+        }
+        return count == 5;
     }
 
     private static String convertCurrentPlayer() {
         return String.valueOf(currentPlayer);
     }
 
-    private static String getValueOfButton(int row, int col) {
-        return buttons[row][col].getText();
-    }
-
     private static boolean checkDraw() {
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 3; col++) {
+        for (int row = 0; row < BOARD_SIZE; row++) {
+            for (int col = 0; col < BOARD_SIZE; col++) {
                 if (buttons[row][col].getText().isEmpty()) {
-                    return false; // If any button is empty, the game is not a draw
+                    return false;
                 }
             }
         }
@@ -135,157 +138,119 @@ public class TicTacToeAIPlay {
         return model;
     }
 
-
     private static void aiMakeMove() {
-        System.out.print(convertBoardToINDArray());
+        // This part will need significant adjustment due to board size change.
+        // This is a rough adaptation and likely won't be optimal.
         INDArray input = convertBoardToINDArray();
         INDArray output = trainedModel.output(input);
-        System.out.println("Model Raw Output: " + output.toString());
+
         displayProbabilities(output);
-        // Create an array to store the moves and their probabilities
-        int[] moves = new int[9];
-        double[] probabilities = new double[9];
 
-        // Populate the moves and probabilities arrays
-        for (int move = 0; move < 9; move++) {
-            int row = move / 3;
-            int col = move % 3;
+        int[] moves = new int[BOARD_SIZE * BOARD_SIZE];
+        double[] probabilities = new double[BOARD_SIZE * BOARD_SIZE];
+
+        for (int move = 0; move < BOARD_SIZE * BOARD_SIZE; move++) {
+            int row = move / BOARD_SIZE;
+            int col = move % BOARD_SIZE;
+
             if (buttons[row][col].getText().isEmpty()) {
+
                 moves[move] = move;
-                probabilities[move] = output.getDouble(0, move);
+                probabilities[move] = output.getDouble(move);
             } else {
-                moves[move] = -1; // Mark unavailable moves
-                probabilities[move] = Double.NEGATIVE_INFINITY; // Set negative infinity for unavailable moves
+                probabilities[move] = -1; // Invalid move; set probability to negative
             }
         }
 
-        // Sort the moves by probabilities in descending order
-        for (int i = 0; i < 9; i++) {
-            for (int j = i + 1; j < 9; j++) {
-                if (probabilities[i] < probabilities[j]) {
-                    // Swap moves and probabilities
-                    int tempMove = moves[i];
-                    double tempProb = probabilities[i];
-                    moves[i] = moves[j];
-                    probabilities[i] = probabilities[j];
-                    moves[j] = tempMove;
-                    probabilities[j] = tempProb;
-                }
-            }
-        }
+        int bestMove = getMaxIndex(probabilities);
+        int row = bestMove / BOARD_SIZE;
+        int col = bestMove % BOARD_SIZE;
 
-        // Try each move until an available one is found
-        for (int move : moves) {
-            if (move != -1) {
-                int row = move / 3;
-                int col = move % 3;
-                buttons[row][col].setText(convertCurrentPlayer());
-                buttons[row][col].setEnabled(false);
-               // Update probabilities
-                return; // Exit the loop if a valid move is made
-            }
+        buttons[row][col].setText(convertCurrentPlayer());
+        if (checkWin()) {
+            showEndGameMessage("AI wins!");
+            resetGame();
+        } else if (checkDraw()) {
+            showEndGameMessage("It's a draw!");
+            resetGame();
         }
     }
 
-
-    private static void initializeProbabilityLabels(JFrame frame) {
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 3; col++) {
-                JLabel label = new JLabel("");
-                label.setFont(new Font("Arial", Font.PLAIN, 20));
-                label.setHorizontalAlignment(JLabel.CENTER);
-                frame.add(label);
+    private static int getMaxIndex(double[] array) {
+        int maxIndex = 0;
+        for (int i = 1; i < array.length; i++) {
+            if (array[i] > array[maxIndex]) {
+                maxIndex = i;
             }
         }
+        return maxIndex;
     }
 
     private static INDArray convertBoardToINDArray() {
-        double[] boardArray = new double[9];
-        int index = 0;
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 3; col++) {
-
-                if (buttons[row][col].getText().equals("X")) {
-                    boardArray[index] = 1.0;
-                } else if (buttons[row][col].getText().equals("O")) {
-                    boardArray[index] = -1.0;
-                } else {
-                    boardArray[index] = 0.0;
+        INDArray boardArray = Nd4j.zeros(1, BOARD_SIZE * BOARD_SIZE);
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                String text = buttons[i][j].getText();
+                if (!text.isEmpty()) {
+                    boardArray.putScalar(new int[] {0, i * BOARD_SIZE + j}, text.equals("X") ? 1 : -1);
                 }
-                index++;
             }
         }
-
-        // Convert the board to a string representation
-        String boardString = Arrays.toString(boardArray);
-        System.out.print(boardString);
-
-        // Use the TicTacToeDataPreparation class to convert it to one-hot encoded INDArray
-        INDArray oneHotEncodedInput = TicTacToeDataPreparation.convertToInput(boardString);
-
-        return oneHotEncodedInput;
+        return boardArray;
     }
 
-    private static void displayProbabilities(INDArray probabilities) {
-        DecimalFormat df = new DecimalFormat("#.####");
-        int index = 0;
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 3; col++) {
-                JLabel label = (JLabel) probabilityFrame.getContentPane().getComponent(index);
-                label.setText("P(" + row + "," + col + "): " + df.format(probabilities.getDouble(index)));
-                index++;
+    private static void displayProbabilities(INDArray output) {
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                double probability = output.getDouble(i * BOARD_SIZE + j);
+                JButton probabilityButton = new JButton(new DecimalFormat("0.00").format(probability));
+                probabilityButton.setEnabled(false);
+                probabilityFrame.add(probabilityButton);
             }
         }
-        probabilityFrame.pack();
         probabilityFrame.setVisible(true);
     }
 
-    private static class ButtonClickListener implements ActionListener {
-        int row, col;
+    private static void showEndGameMessage(String message) {
+        JOptionPane.showMessageDialog(frame, message);
+    }
 
-        ButtonClickListener(int row, int col) {
+    private static void resetGame() {
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                buttons[i][j].setText("");
+            }
+        }
+        currentPlayer = 'X';
+    }
+
+    public static void main(String[] args) {
+        start();
+    }
+
+    private static class ButtonClickListener implements ActionListener {
+        private final int row;
+        private final int col;
+
+        public ButtonClickListener(int row, int col) {
             this.row = row;
             this.col = col;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-                    if (buttons[row][col].getText().isEmpty()) {
-                        buttons[row][col].setText(String.valueOf(currentPlayer));
-                        buttons[row][col].setEnabled(false);
-
-                        if (checkWin()) {
-
-                            JOptionPane.showMessageDialog(null, "Player " + currentPlayer + " wins!");
-                            System.exit(0);
-                        } else if (checkDraw()) {
-
-                            JOptionPane.showMessageDialog(null, "It's a draw!");
-                            System.exit(0);
-                        }
-
-                        switchPlayer();
-                        aiMakeMove();
-                        if (checkWin()) {
-
-                            JOptionPane.showMessageDialog(null, "Player " + currentPlayer + " wins!");
-                            System.exit(0);
-                        } else if (checkDraw()) {
-
-                            JOptionPane.showMessageDialog(null, "It's a draw!");
-                            System.exit(0);
-                        }
-                        switchPlayer();
-
-                        // Runs the data collection
-
-                    }
+            if (buttons[row][col].getText().isEmpty() && currentPlayer == 'X') {
+                buttons[row][col].setText(convertCurrentPlayer());
+                if (checkWin()) {
+                    showEndGameMessage("You win!");
+                    resetGame();
+                } else if (checkDraw()) {
+                    showEndGameMessage("It's a draw!");
+                    resetGame();
+                } else {
+                    switchPlayer();
                 }
             }
-
-
-
-    public static void main(String[] args) {
-        start();
+        }
     }
 }

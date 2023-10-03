@@ -6,6 +6,7 @@ import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
+import org.deeplearning4j.nn.conf.preprocessor.FeedForwardToRnnPreProcessor;
 import org.deeplearning4j.nn.conf.preprocessor.RnnToFeedForwardPreProcessor;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
@@ -24,7 +25,7 @@ public class TicTacToeAITrain {
 
     private static int inputSize;
     private static int hiddenSize;
-    private static int outputSize;
+    public static int outputSize;
     private static double learningRate;
 
     public static void main(String[] args) throws Exception {
@@ -39,10 +40,10 @@ public class TicTacToeAITrain {
         }
 
         // Neural Network Configuration
-        inputSize = 27;
-        hiddenSize = 104;
-        outputSize = 10;
-        int numEpochs = 100;
+        inputSize = 432; // Adjusted for 12x12 board
+        hiddenSize = 468;
+        outputSize = 144; // Adjusted for the 12x12 board
+        int numEpochs = 150;
         learningRate = 0.03;
 
         MultiLayerConfiguration config = getConfiguration();
@@ -105,7 +106,7 @@ public class TicTacToeAITrain {
                         .nOut(outputSize)
                         .activation(Activation.SOFTMAX)
                         .build())
-                .inputPreProcessor(0, new RnnToFeedForwardPreProcessor())
+                //.inputPreProcessor(0, new FeedForwardToRnnPreProcessor()) // Adjusted preprocessor
                 .build();
     }
 }
