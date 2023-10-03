@@ -12,9 +12,9 @@ import javax.swing.*;
 
 public class TicTacToeDataCollection {
 
-    public void start(JButton[][] buttons, int state, char currentPlayer) {
-        System.out.print("Saving game to file. \n");
-        String[] _State = new String[9]; // Initialize with 9 empty strings
+    public void saveMove(JButton[][] buttons, char currentPlayer, int currentState) {
+        System.out.print("Saving move to file. \n");
+        String[] _State = new String[9];
         int i = 0;
 
         for (int row = 0; row < 3; row++) {
@@ -28,10 +28,7 @@ public class TicTacToeDataCollection {
             }
         }
 
-        if (currentPlayer == 'O' && state == 1) {
-            state = -1;
-        }
-
-        WriteToCSV.save(_State, state); // Assuming WriteToCSV.save method is correctly implemented
+        WriteToCSV.save(_State, currentPlayer == 'X' ? 1 : -1, currentState);
     }
 }
+

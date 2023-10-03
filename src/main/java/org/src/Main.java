@@ -1,16 +1,23 @@
 package org.src;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
 public class Main {
     public static void main(String[] args) {
-        int numIterations = 10000; // Number of iterations
-        int numThreads = 7; // Number of threads (adjust as needed)
-        int iterationsPerThread = numIterations / numThreads; // Iterations per thread
 
-        for (int i = 0; i < numThreads; i++) {
-            // Call your program's logic here
-            Thread thread = new Thread(TicTacToeGUI::start);
-            thread.start();
-        }
+            int numThreads = 1;
+            ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+            for (int i = 0; i < numThreads; i++) {
+                executor.submit(TicTacToeGUI::start);
+            }
+            executor.shutdown();
+            try {
+                executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 
     }
 }

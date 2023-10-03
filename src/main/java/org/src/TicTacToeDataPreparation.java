@@ -26,7 +26,7 @@ public class TicTacToeDataPreparation {
 
     private static void prepareData() throws Exception {
         // Load the dataset from a CSV file
-        String csvFilePath = "Dataset1.csv"; // Replace with the actual file path
+        String csvFilePath = "Dataset3.csv"; // Replace with the actual file path
         InputSplit dataSplit = new FileSplit(new File(csvFilePath));
         try (RecordReader recordReader = new CSVRecordReader()) {
             recordReader.initialize(dataSplit);
@@ -40,11 +40,16 @@ public class TicTacToeDataPreparation {
                 try {
                     String gameState = record.get(0).toString();
                     int outcome = Integer.parseInt(record.get(1).toString().trim());
+                    int currentState = Integer.parseInt(record.get(2).toString().trim()); // New input
+
                     // Convert gameState to input (one-hot encoding)
                     INDArray input = convertToInput(gameState);
 
                     // Convert outcome to output (one-hot encoding of next move)
-                    INDArray output = convertToOutput(String.valueOf(outcome));
+                    INDArray output = convertToOutput(String.valueOf(outcome), currentState);
+
+                    // Handle the currentState as needed
+                    // For example, you can add it to the input or output, or use it in some other way.
 
                     inputs.add(input);
                     outputs.add(output);
@@ -86,15 +91,14 @@ public class TicTacToeDataPreparation {
     }
 
     // Helper method to convert outcome to output (one-hot encoding of next move)
-    private static INDArray convertToOutput(String gameState) {
-        // The gameState for the output seems to be reused from the above. I assume this is a mistake.
-        // Instead, you should have an 'int outcome' to tell which position is the next move.
-        // Assuming that, the function should be like:
-
-        int outcome = Integer.parseInt(gameState); // this line should be changed if the outcome is different
-        INDArray output = Nd4j.zeros(1, 9);
+    // Helper method to convert outcome to output (one-hot encoding of next move and current state)
+    private static INDArray convertToOutput(String outcomeStr, int currentState) {
+        int outcome = Integer.parseInt(outcomeStr);
+        INDArray output = Nd4j.zeros(1, 10); // Increased size to 10
         output.putScalar(new int[] {0, outcome}, 1);
+        output.putScalar(new int[] {0, 9}, currentState); // Append currentState to the end
         return output;
     }
+
 
 }

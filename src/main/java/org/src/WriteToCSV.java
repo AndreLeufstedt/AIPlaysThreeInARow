@@ -8,8 +8,8 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 
 public class WriteToCSV {
-    public static void save(String Data[], int data1 ) {
-        String filePath = "DataSet1.csv";
+    public synchronized static void save(String Data[], int data1, int data2 ) {
+        String filePath = "DataSet3.csv";
 
         try {
             FileWriter fileWriter = new FileWriter(filePath, true);
@@ -17,7 +17,7 @@ public class WriteToCSV {
 
 
 
-            csvPrinter.printRecord(String.join("", Data[0], Data[1], Data[2], Data[3], Data[4], Data[5], Data[6], Data[7], Data[8]) + ", " + data1);
+            csvPrinter.printRecord(String.join("", Data[0], Data[1], Data[2], Data[3], Data[4], Data[5], Data[6], Data[7], Data[8]) + ", " + data1 + ", " + data2 );
 
             // Close the FileWriter and CSVPrinter
             csvPrinter.close();

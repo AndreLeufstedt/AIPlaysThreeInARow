@@ -35,23 +35,29 @@ public class TicTacToeGUI {
 
     public static void start() {
         count++;
-        frame = new JFrame("Tic-Tac-Toe");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(300, 300);
-        frame.setLayout(new GridLayout(3, 3));
 
-        initializeButtons(frame);
+
+
+        if (frame == null) {
+            frame = new JFrame("Tic-Tac-Toe");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setSize(300, 300);
+            frame.setLayout(new GridLayout(3, 3));
+            initializeButtons(frame);
+        } else {
+            resetButtons();
+        }
 
         frame.setVisible(true);
 
-        if(count > 2500) {
-            System.exit(0);
+        if(count > 25000) {
+            return;
         }
-/*
-        while (true) {
+
+        for (int game = 0; game < 100; game++) {
             run();
         }
-*/
+
     }
 
     private static void initializeButtons(JFrame frame) {
@@ -178,75 +184,57 @@ public class TicTacToeGUI {
     private record ButtonClickListener(int row, int col) implements ActionListener {
 
         @Override
-            public void actionPerformed(ActionEvent e) {
-                if (buttons[row][col].getText().isEmpty()) {
-                    buttons[row][col].setText(String.valueOf(currentPlayer));
-                    buttons[row][col].setEnabled(false);
+        public void actionPerformed(ActionEvent e) {
+            if (buttons[row][col].getText().isEmpty()) {
+                buttons[row][col].setText(String.valueOf(currentPlayer));
+                buttons[row][col].setEnabled(false);
+               // myDataCollection.saveMove(buttons, currentPlayer); // Save player's move
 
-                    if (checkWin()) {
-                        myDataCollection.start(buttons, 1, currentPlayer);
-                        //JOptionPane.showMessageDialog(null, "Player " + currentPlayer + " wins!");
-                        System.exit(0);
-                    } else if (checkDraw()) {
-                        myDataCollection.start(buttons, 1, currentPlayer);
-                        //JOptionPane.showMessageDialog(null, "It's a draw!");
-                        System.exit(0);
-                    }
-
-                    switchPlayer();
-                    aiMakeMove();
-                    if (checkWin()) {
-                        myDataCollection.start(buttons, 1, currentPlayer);
-                        //JOptionPane.showMessageDialog(null, "Player " + currentPlayer + " wins!");
-                        System.exit(0);
-                    } else if (checkDraw()) {
-                        myDataCollection.start(buttons, 0, currentPlayer);
-                        //JOptionPane.showMessageDialog(null, "It's a draw!");
-                        System.exit(0);
-                    }
-                    switchPlayer();
-
-                    // Runs the data collection
-
+                if (checkWin() || checkDraw()) {
+                    System.exit(0);
                 }
+
+                switchPlayer();
+                aiMakeMove();
+               // myDataCollection.saveMove(buttons, currentPlayer); // Save AI's move
+
+                if (checkWin() || checkDraw()) {
+                    System.exit(0);
+                }
+                switchPlayer();
             }
         }
+    }
 
-        public static void run() {
-            aiMakeMove();
-
-            if (checkWin()) {
-                myDataCollection.start(buttons, 1, currentPlayer);
-                //JOptionPane.showMessageDialog(null, "Player " + currentPlayer + " wins!");
-                //System.exit(0);
-                frame.dispose();
-                start();
-            } else if (checkDraw()) {
-                myDataCollection.start(buttons, 0, currentPlayer);
-                System.out.print("Draw");
-                //JOptionPane.showMessageDialog(null, "It's a draw!");
-                //System.exit(0);
-                frame.dispose();
-                start();
+    private static void resetButtons() {
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 3; col++) {
+                buttons[row][col].setText("");
+                buttons[row][col].setEnabled(true);
             }
+        }
+    }
 
-            switchPlayer();
-            aiMakeMove();
-            if (checkWin()) {
-                myDataCollection.start(buttons, 1, currentPlayer);
-                //JOptionPane.showMessageDialog(null, "Player " + currentPlayer + " wins!");
-                //System.exit(0);
-                frame.dispose();
-                start();
-            } else if (checkDraw()) {
-                myDataCollection.start(buttons, 0, currentPlayer);
-                System.out.print("Draw");
-                //JOptionPane.showMessageDialog(null, "It's a draw!");
-                //System.exit(0);
-                frame.dispose();
-                start();
-            }
-            switchPlayer();
 
+    public static void run() {
+        aiMakeMove();
+
+        if (checkWin() || checkDraw()) {
+            myDataCollection.saveMove(buttons, currentPlayer, checkWin() ? (currentPlayer == 'X' ? 1 : -1) : 0); // Save AI's move with win/lose/draw state
+
+            start();
+        }
+        myDataCollection.saveMove(buttons, currentPlayer, -9);
+        switchPlayer();
+
+        aiMakeMove();
+        if (checkWin() || checkDraw()) {
+            myDataCollection.saveMove(buttons, currentPlayer, checkWin() ? (currentPlayer == 'X' ? 1 : -1) : 0); // Save AI's move with win/lose/draw state
+
+            start();
+        }
+        myDataCollection.saveMove(buttons, currentPlayer, -9);
+
+        switchPlayer();
         }
 }

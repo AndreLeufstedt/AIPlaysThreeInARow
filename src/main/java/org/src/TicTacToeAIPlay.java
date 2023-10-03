@@ -5,6 +5,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.DecimalFormat;
+import java.util.Arrays;
 import java.util.Objects;
 
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
@@ -28,7 +29,7 @@ public class TicTacToeAIPlay {
 
     private static JFrame probabilityFrame;
     public static void start() {
-        trainedModel = loadModel("C:\\Users\\andre.leufstedt\\IdeaProjects\\AThirdAiPlaysTicTacToe\\TicTacToeModel.zip");
+        trainedModel = loadModel("C:\\Users\\andre\\IdeaProjects\\AIPlaysThreeInARow\\TicTacToeModel.zip");
         frame = new JFrame("Tic-Tac-Toe");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(300, 300);
@@ -136,9 +137,11 @@ public class TicTacToeAIPlay {
 
 
     private static void aiMakeMove() {
+        System.out.print(convertBoardToINDArray());
         INDArray input = convertBoardToINDArray();
         INDArray output = trainedModel.output(input);
-
+        System.out.println("Model Raw Output: " + output.toString());
+        displayProbabilities(output);
         // Create an array to store the moves and their probabilities
         int[] moves = new int[9];
         double[] probabilities = new double[9];
@@ -178,7 +181,7 @@ public class TicTacToeAIPlay {
                 int col = move % 3;
                 buttons[row][col].setText(convertCurrentPlayer());
                 buttons[row][col].setEnabled(false);
-                displayProbabilities(output); // Update probabilities
+               // Update probabilities
                 return; // Exit the loop if a valid move is made
             }
         }
@@ -197,24 +200,24 @@ public class TicTacToeAIPlay {
     }
 
     private static INDArray convertBoardToINDArray() {
-        char[] boardArray = new char[9];
+        double[] boardArray = new double[9];
         int index = 0;
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
 
                 if (buttons[row][col].getText().equals("X")) {
-                    boardArray[index] = (char) 1.0;
+                    boardArray[index] = 1.0;
                 } else if (buttons[row][col].getText().equals("O")) {
-                    boardArray[index] = (char) -1.0;
+                    boardArray[index] = -1.0;
                 } else {
-                    boardArray[index] = (char) 0.0;
+                    boardArray[index] = 0.0;
                 }
                 index++;
             }
         }
 
         // Convert the board to a string representation
-        String boardString = new String(boardArray);
+        String boardString = Arrays.toString(boardArray);
         System.out.print(boardString);
 
         // Use the TicTacToeDataPreparation class to convert it to one-hot encoded INDArray
