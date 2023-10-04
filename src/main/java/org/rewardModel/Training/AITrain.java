@@ -1,4 +1,4 @@
-package org.rewardModel;
+package org.rewardModel.Training;
 
 import org.deeplearning4j.datasets.iterator.utilty.ListDataSetIterator;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;

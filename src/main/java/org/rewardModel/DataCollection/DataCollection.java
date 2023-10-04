@@ -1,4 +1,6 @@
-package org.rewardModel;
+package org.rewardModel.DataCollection;
+
+import org.rewardModel.WriteToCSV;
 
 import javax.swing.*;
 
@@ -20,8 +22,9 @@ public class DataCollection {
             }
         }
 
-        WriteToCSV.save(state, currentPlayer == 'X' ? 1 : -1, currentState);
+        int reward = (currentPlayer == 'X' && currentState == 1) || (currentPlayer == 'O' && currentState == -1) ? 1 :
+                (currentPlayer == 'X' && currentState == -1) || (currentPlayer == 'O' && currentState == 1) ? -1 : 0;
+
+        WriteToCSV.save(state, reward, currentState);
     }
 }
-
-

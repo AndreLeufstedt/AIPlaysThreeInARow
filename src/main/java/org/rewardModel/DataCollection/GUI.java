@@ -1,4 +1,4 @@
-package org.rewardModel;
+package org.rewardModel.DataCollection;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,47 +16,29 @@ public class GUI {
     private static DataCollection myDataCollection = new DataCollection();
 
 
-    public static void loop() {
-        int numIterations = 1000; // Number of iterations
-
-        for (int i = 0; i < numIterations; i++) {
-            // Call your program's logic here
-            start();
-
-            // Wait for your program to finish (assuming System.exit is called)
-            try {
-                // Sleep for a while (you can adjust the duration as needed)
-                Thread.sleep(2000); // Sleep for 1 second
-            } catch (InterruptedException e) {
-                System.out.print(e);
-            }
-        }
-    }
-
-    public static void start() {
-        count++;
-
-
-
+    public static void main(String[] args) {
         if (frame == null) {
             frame = new JFrame("Tic-Tac-Toe");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setSize(900, 900);
             frame.setLayout(new GridLayout(12, 12));
             initializeButtons(frame);
+            frame.setVisible(true);
         } else {
             resetButtons();
         }
-
-        frame.setVisible(true);
-
-        if(count > 25000) {
-            return;
-        }
-
-        for (int game = 0; game < 250; game++) {
-            run();
-        }
+        /*
+        while (true) { // This will make the program run continuously
+            boolean continueGame = run();
+            if (!continueGame || checkDraw()) {
+                resetButtons();
+            }
+            try {
+                Thread.sleep(10); // Adding a 500ms delay between games
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }*/
 
     }
 
@@ -85,23 +67,27 @@ public class GUI {
         String currentPlayerStr = convertCurrentPlayer();
 
         // Check rows
-        for (int row = 0; row < 3; row++) {
+        for (int row = 0; row < 12; row++) {
             if (checkConsecutiveSymbols(currentPlayerStr, 0, row, 1, 0, 5)) {
                 return true;
             }
         }
 
         // Check columns
-        for (int col = 0; col < 3; col++) {
+        for (int col = 0; col < 12; col++) {
             if (checkConsecutiveSymbols(currentPlayerStr, col, 0, 0, 1, 5)) {
                 return true;
             }
         }
 
         // Check diagonals
-        if (checkConsecutiveSymbols(currentPlayerStr, 0, 0, 1, 1, 5) ||
-                checkConsecutiveSymbols(currentPlayerStr, 0, 4, 1, -1, 5)) {
-            return true;
+        for (int i = 0; i < 8; i++) {
+            if (checkConsecutiveSymbols(currentPlayerStr, i, 0, 1, 1, 5) ||
+                    checkConsecutiveSymbols(currentPlayerStr, 0, i, 1, 1, 5) ||
+                    checkConsecutiveSymbols(currentPlayerStr, i, 0, 1, -1, 5) ||
+                    checkConsecutiveSymbols(currentPlayerStr, 0, i, 1, -1, 5)) {
+                return true;
+            }
         }
 
         return false;
@@ -112,7 +98,7 @@ public class GUI {
         for (int i = 0; i < count; i++) {
             int row = startY + i * deltaY;
             int col = startX + i * deltaX;
-            if (row >= 0 && row < 3 && col >= 0 && col < 3 && getValueOfButton(row, col).equals(symbol)) {
+            if (row >= 0 && row < 12 && col >= 0 && col < 12 && getValueOfButton(row, col).equals(symbol)) {
                 consecutiveCount++;
                 if (consecutiveCount == 5) {
                     return true;
@@ -123,6 +109,7 @@ public class GUI {
         }
         return false;
     }
+
 
 
 
@@ -217,7 +204,8 @@ public class GUI {
             if (buttons[row][col].getText().isEmpty()) {
                 buttons[row][col].setText(String.valueOf(currentPlayer));
                 buttons[row][col].setEnabled(false);
-               // myDataCollection.saveMove(buttons, currentPlayer); // Save player's move
+                int gameState = checkGameState();
+                myDataCollection.saveMove(buttons, currentPlayer, gameState);
 
                 if (checkWin() || checkDraw()) {
                     System.exit(0);
@@ -225,7 +213,8 @@ public class GUI {
 
                 switchPlayer();
                 aiMakeMove();
-               // myDataCollection.saveMove(buttons, currentPlayer); // Save AI's move
+                gameState = checkGameState();
+                myDataCollection.saveMove(buttons, currentPlayer, gameState);
 
                 if (checkWin() || checkDraw()) {
                     System.exit(0);
@@ -245,25 +234,30 @@ public class GUI {
     }
 
 
-    public static void run() {
-        aiMakeMove();
-
-        if (checkWin() || checkDraw()) {
-            myDataCollection.saveMove(buttons, currentPlayer, checkWin() ? (currentPlayer == 'X' ? 1 : -1) : 0); // Save AI's move with win/lose/draw state
-
-            start();
+    public static boolean run() {
+        //aiMakeMove();
+        int gameState = checkGameState();
+        myDataCollection.saveMove(buttons, currentPlayer, gameState);
+        if (gameState == 1 || gameState == -1 || gameState == 0) {
+            return false; // End the game if there's a win, lose, or draw
         }
-        myDataCollection.saveMove(buttons, currentPlayer, -9);
+
         switchPlayer();
 
         aiMakeMove();
-        if (checkWin() || checkDraw()) {
-            myDataCollection.saveMove(buttons, currentPlayer, checkWin() ? (currentPlayer == 'X' ? 1 : -1) : 0); // Save AI's move with win/lose/draw state
-
-            start();
+        gameState = checkGameState();
+        myDataCollection.saveMove(buttons, currentPlayer, gameState);
+        if (gameState == 1 || gameState == -1 || gameState == 0) {
+            return false; // End the game if there's a win, lose, or draw
         }
-        myDataCollection.saveMove(buttons, currentPlayer, -9);
 
         switchPlayer();
-        }
+        return true; // Continue the game
+    }
+
+    private static int checkGameState() {
+        return checkWin() ? (currentPlayer == 'X' ? 1 : -1) : checkDraw() ? 0 : -9;
+    }
+
+
 }
