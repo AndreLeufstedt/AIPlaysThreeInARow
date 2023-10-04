@@ -1,4 +1,4 @@
-package org.src;
+package org.rewardModel;
 
 import org.datavec.api.records.reader.RecordReader;
 import org.datavec.api.records.reader.impl.csv.CSVRecordReader;
@@ -11,8 +11,6 @@ import org.nd4j.linalg.factory.Nd4j;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.src.TicTacToeAITrain.outputSize;
 
 public class TicTacToeDataPreparation {
     private static List<INDArray> inputs;

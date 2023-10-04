@@ -1,17 +1,17 @@
-package org.src;
+package org.rewardModel;
+
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.deeplearning4j.util.ModelSerializer;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.DecimalFormat;
-import java.util.Objects;
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
-import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.factory.Nd4j;
-import org.deeplearning4j.util.ModelSerializer;
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
 
 public class TicTacToeAIPlay {
     private static char currentPlayer = 'X';
