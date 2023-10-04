@@ -13,7 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
 
-public class TicTacToeAIPlay {
+public class AIPlay {
     private static char currentPlayer = 'X';
     private static JFrame frame;
     private static final int BOARD_SIZE = 12;

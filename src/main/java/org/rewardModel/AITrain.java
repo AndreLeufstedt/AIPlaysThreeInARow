@@ -19,7 +19,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TicTacToeAITrain {
+public class AITrain {
 
     private static int inputSize;
     private static int hiddenSize;
@@ -28,8 +28,8 @@ public class TicTacToeAITrain {
 
     public static void main(String[] args) throws Exception {
         // Fetch Training Data from Data Preparation Class
-        List<INDArray> inputs = TicTacToeDataPreparation.getInputs();
-        List<INDArray> outputs = TicTacToeDataPreparation.getOutputs();
+        List<INDArray> inputs = DataPreparation.getInputs();
+        List<INDArray> outputs = DataPreparation.getOutputs();
 
         // Convert lists of inputs and outputs to DataSet
         List<DataSet> trainingData = new ArrayList<>();

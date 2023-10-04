@@ -6,14 +6,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Objects;
 
-public class TicTacToeGUI {
+public class GUI {
     private static char currentPlayer = 'X';
     private static int count = 0;
 
     private static JFrame frame;
     private static final JButton[][] buttons = new JButton[12][12];
 
-    private static TicTacToeDataCollection myDataCollection = new TicTacToeDataCollection();
+    private static DataCollection myDataCollection = new DataCollection();
 
 
     public static void loop() {

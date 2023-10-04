@@ -12,7 +12,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TicTacToeDataPreparation {
+public class DataPreparation {
     private static List<INDArray> inputs;
     private static List<INDArray> outputs;
 

@@ -2,7 +2,7 @@ package org.rewardModel;
 
 import javax.swing.*;
 
-public class TicTacToeDataCollection {
+public class DataCollection {
 
     public void saveMove(JButton[][] buttons, char currentPlayer, int currentState) {
         System.out.print("Saving move to file.\n");

@@ -10,7 +10,7 @@ public class Main {
             int numThreads = 1;
             ExecutorService executor = Executors.newFixedThreadPool(numThreads);
             for (int i = 0; i < numThreads; i++) {
-                executor.submit(TicTacToeGUI::start);
+                executor.submit(GUI::start);
             }
             executor.shutdown();
             try {
