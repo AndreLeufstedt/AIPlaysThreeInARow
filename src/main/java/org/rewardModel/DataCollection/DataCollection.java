@@ -1,6 +1,6 @@
 package org.rewardModel.DataCollection;
 
-import org.rewardModel.WriteToCSV;
+import org.rewardModel.DataCollection.WriteToCSV;
 
 import javax.swing.*;
 

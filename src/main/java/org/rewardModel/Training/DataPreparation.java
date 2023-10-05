@@ -28,9 +28,9 @@ public class DataPreparation {
 
     private static void prepareData() throws Exception {
         // Load the dataset from a CSV file
-        String csvFilePath = "Datasets1.csv"; // Replace with the actual file path
+        String csvFilePath = "C:\\Users\\andre\\IdeaProjects\\AIPlaysThreeInARow\\src\\main\\java\\org\\rewardModel\\DataCollection\\RewardModelDataset1.csv"; // Replace with the actual file path
         InputSplit dataSplit = new FileSplit(new File(csvFilePath));
-        try (RecordReader recordReader = new CSVRecordReader()) {
+        try (RecordReader recordReader = new CSVRecordReader(295000, ',')) {
             recordReader.initialize(dataSplit);
 
             // Prepare lists for inputs (game states) and outputs (next moves)
@@ -63,7 +63,7 @@ public class DataPreparation {
                     }
                 } else {
                     skipped++;
-                    System.out.println(skipped + " Skipping record with insufficient elements: " + record);
+                    System.out.println(skipped + " Skipping record with insufficient elements (" + record.size() + "): " + record);
                 }
             }
         }
@@ -80,24 +80,26 @@ public class DataPreparation {
 
     // Helper method to convert gameState to input (one-hot encoding)
     public static INDArray convertToInput(String gameState) {
-        INDArray input = Nd4j.zeros(1, 432);
+        INDArray input = Nd4j.zeros(12, 12);  // create a 12x12 matrix
 
         for (int i = 0; i < gameState.length(); i++) {
             char c = gameState.charAt(i);
+            int row = i / 12;
+            int col = i % 12;
+
             if (c == 'X') {
-                input.putScalar(new int[] {0, i * 3}, 1);
+                input.putScalar(row, col, -1);  // X as -1
             } else if (c == 'O') {
-                input.putScalar(new int[] {0, i * 3 + 1}, 1);
-            } else if (c == 'E') {
-                input.putScalar(new int[] {0, i * 3 + 2}, 1);
-            }
+                input.putScalar(row, col, 1);   // O as 1
+            } // no need for 'E' since zeros represent empty spots
         }
 
-        // Reshape the input to have shape [1, 432]
-        input = input.reshape(1, 432);
+        // Add an extra dimension to match the required input shape: [1, 1, 12, 12]
+        input = input.reshape(1, 1, 12, 12);
 
         return input;
     }
+
 
 
     // Helper method to convert outcome and currentState to output

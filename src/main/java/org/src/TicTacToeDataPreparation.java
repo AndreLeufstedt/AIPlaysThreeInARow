@@ -30,10 +30,14 @@ public class TicTacToeDataPreparation {
 
     private static void prepareData() throws Exception {
         // Load the dataset from a CSV file
+        int numLinesToSkip = 750000; // The number of lines you want to skip
         String csvFilePath = "Datasets1.csv"; // Replace with the actual file path
-        InputSplit dataSplit = new FileSplit(new File(csvFilePath));
-        try (RecordReader recordReader = new CSVRecordReader()) {
-            recordReader.initialize(dataSplit);
+        File inputFile = new File(csvFilePath);
+        FileSplit fileSplit = new FileSplit(inputFile);
+
+
+        try (RecordReader recordReader = new CSVRecordReader(numLinesToSkip, ',')) {
+            recordReader.initialize(fileSplit);
 
             // Prepare lists for inputs (game states) and outputs (next moves)
             inputs = new ArrayList<>();

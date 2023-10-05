@@ -1,4 +1,4 @@
-package org.rewardModel;
+package org.rewardModel.DataCollection;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -18,7 +18,7 @@ public class WriteToCSV {
             for (String value : data) {
                 csvRecord.append(value);
             }
-            csvRecord.append(", ").append(reward).append(", ").append(gameState);
+            csvRecord.append(",").append(reward).append(",").append(gameState);
 
             csvPrinter.printRecord(csvRecord.toString());
 

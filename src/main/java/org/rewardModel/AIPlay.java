@@ -24,7 +24,7 @@ public class AIPlay {
     private static final JLabel[][] probabilityLabels = new JLabel[BOARD_SIZE][BOARD_SIZE];
 
     public static void start() {
-        trainedModel = loadModel("C:\\Users\\andre.leufstedt\\IdeaProjects\\AThirdAiPlaysTicTacToe\\TicTacToeModel.zip");
+        trainedModel = loadModel("C:\\Users\\andre\\IdeaProjects\\AIPlaysThreeInARow\\TicTacToeModelReward.zip");
         frame = new JFrame("Five-in-a-Row");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(BOARD_SIZE * 50, BOARD_SIZE * 50);
@@ -40,12 +40,12 @@ public class AIPlay {
         initializeProbabilityLabels(probabilityFrame);
 
 
-        while (true) {
+        do {
             if (currentPlayer == 'O') {
                 aiMakeMove();
                 switchPlayer();
             }
-        }
+        } while (true);
     }
 
 

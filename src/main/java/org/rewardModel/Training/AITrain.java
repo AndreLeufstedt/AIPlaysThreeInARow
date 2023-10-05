@@ -3,6 +3,8 @@ package org.rewardModel.Training;
 import org.deeplearning4j.datasets.iterator.utilty.ListDataSetIterator;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
+import org.deeplearning4j.nn.conf.inputs.InputType;
+import org.deeplearning4j.nn.conf.layers.ConvolutionLayer;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
@@ -13,6 +15,7 @@ import org.nd4j.evaluation.classification.Evaluation;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
+import org.nd4j.linalg.learning.config.Nesterovs;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import java.io.File;
@@ -32,23 +35,26 @@ public class AITrain {
         List<INDArray> outputs = DataPreparation.getOutputs();
 
         // Convert lists of inputs and outputs to DataSet
-        List<DataSet> trainingData = new ArrayList<>();
+        List<DataSet> allData = new ArrayList<>();
         for (int i = 0; i < inputs.size(); i++) {
-            trainingData.add(new DataSet(inputs.get(i), outputs.get(i)));
+            allData.add(new DataSet(inputs.get(i), outputs.get(i)));
         }
 
         // Neural Network Configuration
         inputSize = 432; // Adjusted for 12x12 board
-        hiddenSize = 468;
+        hiddenSize = 488;
         outputSize = 144; // Adjusted for the 12x12 board
-        int numEpochs = 150;
-        learningRate = 0.03;
+        int numEpochs = 5;
+
 
         MultiLayerConfiguration config = getConfiguration();
 
         MultiLayerNetwork model = new MultiLayerNetwork(config);
         model.init();
 
+        // Create ModelValidator instance
+        ModelValidator validator = new ModelValidator(model, allData);
+        /*
         // Use ParallelWrapper for parallel training
         ParallelWrapper wrapper = new ParallelWrapper.Builder<>(model)
                 .prefetchBuffer(24)
@@ -56,9 +62,9 @@ public class AITrain {
                 .averagingFrequency(3)
                 .reportScoreAfterAveraging(true)
                 .build();
-
+        */
         // Create a DataSetIterator for training
-        ListDataSetIterator<DataSet> iterator = new ListDataSetIterator<>(trainingData, trainingData.size());
+        ListDataSetIterator<DataSet> iterator = new ListDataSetIterator<>(validator.getValidationData(), validator.getValidationData().size());
 
         // Configure the training process
         model.setListeners(new ScoreIterationListener(10));
@@ -67,11 +73,15 @@ public class AITrain {
         for (int epoch = 0; epoch < numEpochs; epoch++) {
             System.out.print("\nEpoch: " + (epoch + 1));
             iterator.reset();
-            wrapper.fit(iterator);
+            model.fit(iterator);
+
+            // Validate after each epoch
+            Evaluation valEvaluation = validator.validate();
+            System.out.println("Validation stats after epoch " + (epoch + 1) + ":\n" + valEvaluation.stats());
         }
 
         // Save the trained model
-        String modelSavePath = "TicTacToeModel.zip";
+        String modelSavePath = "TicTacToeModelReward.zip";
         model.save(new File(modelSavePath));
 
         // Evaluation on the training data (for demonstration purposes)
@@ -87,24 +97,73 @@ public class AITrain {
         System.out.println("Training Evaluation:\n" + evaluation.stats());
     }
 
-    public static MultiLayerConfiguration getConfiguration() {
+
+    /*public static MultiLayerConfiguration getConfiguration() {
+        int seed = 123;
+        double learningRate = 0.0005;
+
         return new NeuralNetConfiguration.Builder()
-                .seed(123)
+                .seed(seed)
+                .updater(new Nesterovs(learningRate, 0.9)) // Nesterovs momentum
                 .weightInit(WeightInit.XAVIER)
-                .updater(new org.nd4j.linalg.learning.config.Adam(learningRate))
+                .l2(1e-4)
                 .list()
-                .layer(0, new DenseLayer.Builder()
-                        .nIn(inputSize)
-                        .nOut(hiddenSize)
+                .layer(new ConvolutionLayer.Builder(3, 3)
+                        .nIn(1) // 1 input channel
+                        .stride(1, 1)
+                        .nOut(128)
                         .activation(Activation.RELU)
-                        .dropOut(0.5)
                         .build())
-                .layer(1, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
-                        .nIn(hiddenSize)
-                        .nOut(outputSize)
+                .layer(new ConvolutionLayer.Builder(3, 3)
+                        .nOut(256)
+                        .activation(Activation.RELU)
+                        .build())
+                .layer(new ConvolutionLayer.Builder(3, 3)
+                        .nOut(128)
+                        .activation(Activation.RELU)
+                        .build())
+                .layer(new DenseLayer.Builder()
+                        .nOut(512)
+                        .activation(Activation.RELU)
+                        .build())
+                .layer(new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
+                        .nOut(144) // Adjusted for 12x12 board
                         .activation(Activation.SOFTMAX)
                         .build())
-                //.inputPreProcessor(0, new FeedForwardToRnnPreProcessor()) // Adjusted preprocessor
+                .setInputType(InputType.convolutional(12, 12, 1))
+                .build();
+    }*/
+
+    public static MultiLayerConfiguration getConfiguration() {
+        int seed = 123;
+        double learningRate = 0.0007;
+
+        return new NeuralNetConfiguration.Builder()
+                .seed(seed)
+                .updater(new Nesterovs(learningRate, 0.9)) // Nesterovs momentum
+                .weightInit(WeightInit.XAVIER)
+                .l2(1e-4)
+                .list()
+                .layer(new ConvolutionLayer.Builder(3, 3)
+                        .nIn(1) // 1 input channel
+                        .stride(1, 1)
+                        .nOut(64) // Reduced from 128
+                        .activation(Activation.RELU)
+                        .build())
+                .layer(new ConvolutionLayer.Builder(3, 3)
+                        .nOut(128) // Kept as 128 but you can reduce further if needed
+                        .activation(Activation.RELU)
+                        .build())
+                .layer(new DenseLayer.Builder()
+                        .nOut(256) // Reduced from 512
+                        .activation(Activation.RELU)
+                        .build())
+                .layer(new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
+                        .nOut(144) // Adjusted for 12x12 board
+                        .activation(Activation.SOFTMAX)
+                        .build())
+                .setInputType(InputType.convolutionalFlat(12, 12, 1))
                 .build();
     }
+
 }
