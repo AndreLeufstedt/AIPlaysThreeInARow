@@ -14,14 +14,13 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 
 public class AIPlay {
+    private static final int BOARD_SIZE = 12;
     private static char currentPlayer = 'X';
     private static JFrame frame;
-    private static final int BOARD_SIZE = 12;
-    private static final JButton[][] buttons = new JButton[BOARD_SIZE][BOARD_SIZE];
+    private static JButton[][] buttons = new JButton[BOARD_SIZE][BOARD_SIZE];
     private static MultiLayerNetwork trainedModel;
     private static JFrame probabilityFrame;
-
-    private static final JLabel[][] probabilityLabels = new JLabel[BOARD_SIZE][BOARD_SIZE];
+    private static JLabel[][] probabilityLabels = new JLabel[BOARD_SIZE][BOARD_SIZE];
 
     public static void start() {
         trainedModel = loadModel("C:\\Users\\andre\\IdeaProjects\\AIPlaysThreeInARow\\TicTacToeModelReward.zip");
@@ -32,13 +31,6 @@ public class AIPlay {
 
         initializeButtons(frame);
         frame.setVisible(true);
-
-        probabilityFrame = new JFrame("Probabilities");
-        probabilityFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        probabilityFrame.setSize(BOARD_SIZE * 100, BOARD_SIZE * 100);
-        probabilityFrame.setLayout(new GridLayout(BOARD_SIZE, BOARD_SIZE));
-        initializeProbabilityLabels(probabilityFrame);
-
 
         do {
             if (currentPlayer == 'O') {
@@ -142,11 +134,12 @@ public class AIPlay {
     private static void aiMakeMove() {
         // This part will need significant adjustment due to board size change.
         // This is a rough adaptation and likely won't be optimal.
+
         INDArray input = convertBoardToINDArray();
         INDArray output = trainedModel.output(input);
-
         displayProbabilities(output);
 
+        displayProbabilities(output);
         int[] moves = new int[BOARD_SIZE * BOARD_SIZE];
         double[] probabilities = new double[BOARD_SIZE * BOARD_SIZE];
 
@@ -188,40 +181,50 @@ public class AIPlay {
     }
 
     private static INDArray convertBoardToINDArray() {
-        INDArray boardArray = Nd4j.zeros(1, BOARD_SIZE * BOARD_SIZE * 3); // Multiplied by 3 for 3 possible states
+        INDArray boardArray = Nd4j.zeros(1, 1, BOARD_SIZE, BOARD_SIZE);
         for (int i = 0; i < BOARD_SIZE; i++) {
             for (int j = 0; j < BOARD_SIZE; j++) {
                 String text = buttons[i][j].getText();
                 if (text.equals("X")) {
-                    boardArray.putScalar(new int[] {0, (i * BOARD_SIZE + j) * 3}, 1);
+                    boardArray.putScalar(new int[]{0, 0, i, j}, 1);
                 } else if (text.equals("O")) {
-                    boardArray.putScalar(new int[] {0, (i * BOARD_SIZE + j) * 3 + 1}, 1);
-                } else {
-                    boardArray.putScalar(new int[] {0, (i * BOARD_SIZE + j) * 3 + 2}, 1);
-                }
+                    boardArray.putScalar(new int[]{0, 0, i, j}, -1);
+                } // else it remains 0 for an empty cell
             }
         }
         return boardArray;
     }
 
 
+
+
     private static void displayProbabilities(INDArray output) {
-        probabilityFrame.dispose();
-        probabilityFrame = new JFrame("Probabilities");
-        probabilityFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        probabilityFrame.setSize(BOARD_SIZE * 100, BOARD_SIZE * 100);
-        probabilityFrame.setLayout(new GridLayout(BOARD_SIZE, BOARD_SIZE));
-        initializeProbabilityLabels(probabilityFrame);
+        if (probabilityFrame == null) {
+            probabilityFrame = new JFrame("AI Probabilities");
+            probabilityFrame.setSize(600, 600);
+            probabilityFrame.setLayout(new GridLayout(BOARD_SIZE, BOARD_SIZE));
+            probabilityFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+            probabilityLabels = new JLabel[BOARD_SIZE][BOARD_SIZE];
+            for (int i = 0; i < BOARD_SIZE; i++) {
+                for (int j = 0; j < BOARD_SIZE; j++) {
+                    probabilityLabels[i][j] = new JLabel("0.00", SwingConstants.CENTER);
+                    probabilityLabels[i][j].setBorder(BorderFactory.createLineBorder(Color.BLACK));
+                    probabilityFrame.add(probabilityLabels[i][j]);
+                }
+            }
+            probabilityFrame.setVisible(true);
+        }
+
+        DecimalFormat df = new DecimalFormat("#.###");
         for (int i = 0; i < BOARD_SIZE; i++) {
             for (int j = 0; j < BOARD_SIZE; j++) {
                 double probability = output.getDouble(i * BOARD_SIZE + j);
-                JButton probabilityButton = new JButton(new DecimalFormat("0.00").format(probability));
-                probabilityButton.setEnabled(false);
-                probabilityFrame.add(probabilityButton);
+                probabilityLabels[i][j].setText(df.format(probability));
             }
         }
-        probabilityFrame.setVisible(true);
     }
+
 
     private static void showEndGameMessage(String message) {
         JOptionPane.showMessageDialog(frame, message);

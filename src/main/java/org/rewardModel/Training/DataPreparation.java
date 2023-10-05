@@ -30,7 +30,7 @@ public class DataPreparation {
         // Load the dataset from a CSV file
         String csvFilePath = "C:\\Users\\andre\\IdeaProjects\\AIPlaysThreeInARow\\src\\main\\java\\org\\rewardModel\\DataCollection\\RewardModelDataset1.csv"; // Replace with the actual file path
         InputSplit dataSplit = new FileSplit(new File(csvFilePath));
-        try (RecordReader recordReader = new CSVRecordReader(295000, ',')) {
+        try (RecordReader recordReader = new CSVRecordReader(0, ',')) {
             recordReader.initialize(dataSplit);
 
             // Prepare lists for inputs (game states) and outputs (next moves)

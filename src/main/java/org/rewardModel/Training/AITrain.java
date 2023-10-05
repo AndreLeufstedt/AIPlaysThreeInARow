@@ -3,6 +3,7 @@ package org.rewardModel.Training;
 import org.deeplearning4j.datasets.iterator.utilty.ListDataSetIterator;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
+import org.deeplearning4j.nn.conf.WorkspaceMode;
 import org.deeplearning4j.nn.conf.inputs.InputType;
 import org.deeplearning4j.nn.conf.layers.ConvolutionLayer;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
@@ -24,10 +25,13 @@ import java.util.List;
 
 public class AITrain {
 
-    private static int inputSize;
-    private static int hiddenSize;
-    public static int outputSize;
-    private static double learningRate;
+    private static final int INPUT_SIZE = 432; // Adjusted for 12x12 board
+    private static final int HIDDEN_SIZE = 488;
+    private static final int NUM_EPOCHS = 5;
+    public static final int OUTPUT_SIZE = 144; // Adjusted for the 12x12 board
+    private static final double LEARNING_RATE = 0.0007;
+
+
 
     public static void main(String[] args) throws Exception {
         // Fetch Training Data from Data Preparation Class
@@ -40,11 +44,6 @@ public class AITrain {
             allData.add(new DataSet(inputs.get(i), outputs.get(i)));
         }
 
-        // Neural Network Configuration
-        inputSize = 432; // Adjusted for 12x12 board
-        hiddenSize = 488;
-        outputSize = 144; // Adjusted for the 12x12 board
-        int numEpochs = 5;
 
 
         MultiLayerConfiguration config = getConfiguration();
@@ -70,7 +69,7 @@ public class AITrain {
         model.setListeners(new ScoreIterationListener(10));
 
         // Train the model using ParallelWrapper
-        for (int epoch = 0; epoch < numEpochs; epoch++) {
+        for (int epoch = 0; epoch < NUM_EPOCHS; epoch++) {
             System.out.print("\nEpoch: " + (epoch + 1));
             iterator.reset();
             model.fit(iterator);
@@ -85,7 +84,7 @@ public class AITrain {
         model.save(new File(modelSavePath));
 
         // Evaluation on the training data (for demonstration purposes)
-        Evaluation evaluation = new Evaluation(outputSize);
+        Evaluation evaluation = new Evaluation(OUTPUT_SIZE);
         iterator.reset();
 
         while (iterator.hasNext()) {
@@ -98,68 +97,33 @@ public class AITrain {
     }
 
 
-    /*public static MultiLayerConfiguration getConfiguration() {
-        int seed = 123;
-        double learningRate = 0.0005;
-
-        return new NeuralNetConfiguration.Builder()
-                .seed(seed)
-                .updater(new Nesterovs(learningRate, 0.9)) // Nesterovs momentum
-                .weightInit(WeightInit.XAVIER)
-                .l2(1e-4)
-                .list()
-                .layer(new ConvolutionLayer.Builder(3, 3)
-                        .nIn(1) // 1 input channel
-                        .stride(1, 1)
-                        .nOut(128)
-                        .activation(Activation.RELU)
-                        .build())
-                .layer(new ConvolutionLayer.Builder(3, 3)
-                        .nOut(256)
-                        .activation(Activation.RELU)
-                        .build())
-                .layer(new ConvolutionLayer.Builder(3, 3)
-                        .nOut(128)
-                        .activation(Activation.RELU)
-                        .build())
-                .layer(new DenseLayer.Builder()
-                        .nOut(512)
-                        .activation(Activation.RELU)
-                        .build())
-                .layer(new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
-                        .nOut(144) // Adjusted for 12x12 board
-                        .activation(Activation.SOFTMAX)
-                        .build())
-                .setInputType(InputType.convolutional(12, 12, 1))
-                .build();
-    }*/
-
     public static MultiLayerConfiguration getConfiguration() {
         int seed = 123;
-        double learningRate = 0.0007;
 
         return new NeuralNetConfiguration.Builder()
                 .seed(seed)
-                .updater(new Nesterovs(learningRate, 0.9)) // Nesterovs momentum
+                .trainingWorkspaceMode(WorkspaceMode.SINGLE)
+                .inferenceWorkspaceMode(WorkspaceMode.SINGLE)
+                .updater(new Nesterovs(LEARNING_RATE, 0.9))
                 .weightInit(WeightInit.XAVIER)
                 .l2(1e-4)
                 .list()
                 .layer(new ConvolutionLayer.Builder(3, 3)
-                        .nIn(1) // 1 input channel
+                        .nIn(1)
                         .stride(1, 1)
-                        .nOut(64) // Reduced from 128
+                        .nOut(64)
                         .activation(Activation.RELU)
                         .build())
                 .layer(new ConvolutionLayer.Builder(3, 3)
-                        .nOut(128) // Kept as 128 but you can reduce further if needed
+                        .nOut(64)
                         .activation(Activation.RELU)
                         .build())
                 .layer(new DenseLayer.Builder()
-                        .nOut(256) // Reduced from 512
+                        .nOut(64)
                         .activation(Activation.RELU)
                         .build())
                 .layer(new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
-                        .nOut(144) // Adjusted for 12x12 board
+                        .nOut(OUTPUT_SIZE)
                         .activation(Activation.SOFTMAX)
                         .build())
                 .setInputType(InputType.convolutionalFlat(12, 12, 1))
