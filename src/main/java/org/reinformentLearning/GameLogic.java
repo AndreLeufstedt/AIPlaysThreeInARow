@@ -24,6 +24,20 @@ public class GameLogic {
     private static MultiLayerNetwork model;
     private static final double EPSILON = 0.2;  // Exploration rate
 
+    // Training metrics
+    private static double cumulativeReward = 0;
+    private static double loss = 0;
+    private static double explorationRate = 1.0; // Starting with full exploration
+
+    // Model checkpoints
+    private static double bestReward = Double.NEGATIVE_INFINITY;
+    private static final String MODEL_PATH = "bestModel.zip";
+
+    // Training details
+    private static int episodeLength = 0;
+    private static int[] actionDistribution = new int[BOARD_SIZE * BOARD_SIZE];
+
+
 
     static {
         try {
@@ -36,15 +50,24 @@ public class GameLogic {
 
 
     public static void start() {
-        frame = new JFrame("Five-in-a-Row");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(BOARD_SIZE * 50, BOARD_SIZE * 50);
-        frame.setLayout(new GridLayout(BOARD_SIZE, BOARD_SIZE));
+        System.gc();
+        if (frame == null || !frame.isVisible()) {
+            frame = new JFrame("Five-in-a-Row");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setSize(BOARD_SIZE * 50, BOARD_SIZE * 50);
+            frame.setLayout(new GridLayout(BOARD_SIZE, BOARD_SIZE));
 
-        initializeButtons(frame);
-        frame.setVisible(true);
+            initializeButtons(frame);
+            frame.setVisible(true);
+        }
 
+        try {
+            Thread.sleep(10); // Adding a 500ms delay between games
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         aiMove();
+
     }
 
 
@@ -61,6 +84,34 @@ public class GameLogic {
             }
         }
     }
+
+    private static void endEpisode() {
+        System.out.println("Episode ended. Cumulative reward: " + cumulativeReward);
+        System.out.println("Episode length: " + episodeLength);
+        System.out.println("Action distribution: " + java.util.Arrays.toString(actionDistribution));
+
+        // Save model if it's the best so far
+        if (cumulativeReward > bestReward) {
+            bestReward = cumulativeReward;
+            saveModel();
+        }
+
+        // Reset metrics for the next episode
+        cumulativeReward = 0;
+        episodeLength = 0;
+        actionDistribution = new int[BOARD_SIZE * BOARD_SIZE];
+    }
+
+    private static void saveModel() {
+        try {
+            ModelSerializer.writeModel(model, MODEL_PATH, true);
+            System.out.println("Saved best model to " + MODEL_PATH);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 
     private static void initializeButtons(JFrame frame) {
         for (int row = 0; row < BOARD_SIZE; row++) {
@@ -139,7 +190,7 @@ public class GameLogic {
             }
         }
         currentPlayer = 'X';
-        aiMove();
+        start();
     }
 
     private static int getBestMove(INDArray output) {
@@ -168,7 +219,8 @@ public class GameLogic {
     }
 
 
-    private static void aiMove() {
+    private static void aiMove(){
+
         // Get the current state of the board
         INDArray currentState = getCurrentState();
 
@@ -183,18 +235,41 @@ public class GameLogic {
         // Update the board
         buttons[row][col].setText(convertCurrentPlayer());
 
+        // Update metrics
+        cumulativeReward += getRewardForCurrentState(); // Assuming you have a function to get the reward
+        episodeLength++;
+        actionDistribution[row * BOARD_SIZE + col]++;
+
         // Check for win or draw
         if (checkWin()) {
             //showEndGameMessage(currentPlayer + " wins!");
+            endEpisode(); // Call endEpisode to log and reset metrics
             resetGame();
         } else if (checkDraw()) {
             //showEndGameMessage("It's a draw!");
+            endEpisode(); // Call endEpisode to log and reset metrics
             resetGame();
         } else {
             switchPlayer();
             aiMove(); // Recursive call for the next AI move
         }
     }
+
+    private static double getRewardForCurrentState() {
+        if (checkWin()) {
+            if (currentPlayer == 'X') { // Assuming 'X' is the AI
+                return 1.0; // AI wins
+            } else {
+                return -1.0; // AI loses
+            }
+        } else if (checkDraw()) {
+            return 0.5; // Draw is slightly favorable
+        } else {
+            return 0.0; // Neutral reward for all other states
+        }
+    }
+
+
 
     private static INDArray getCurrentState() {
         // Convert the board to a 1D array representation
