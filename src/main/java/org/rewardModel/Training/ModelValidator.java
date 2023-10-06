@@ -37,7 +37,7 @@ public class ModelValidator {
     }
 
     public Evaluation validate() {
-        Evaluation evaluation = new Evaluation(AITrain.outputSize);
+        Evaluation evaluation = new Evaluation(AITrain.OUTPUT_SIZE);
         for (DataSet ds : validationData) {
             INDArray output = model.output(ds.getFeatures());
             evaluation.eval(ds.getLabels(), output);
